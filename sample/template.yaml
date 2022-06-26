@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sample project
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 300
+
+Parameters:
+  LocalUserTableName:
+    Type: String 
+    Description: The DynamoDB table for storing User PublicAddress and Nonce
+    Default: 'UserTable'
+
+  RegionName:
+    Type: String 
+    Description: Default region for deployment.
+    Default: 'ap-northeast-2'
+
+  AwsEnvName:
+    Type: String 
+    Description: AWS Environment where code is being executed (AWS_SAM_LOCAL or AWS)
+    Default: 'AWS_SAM_LOCAL'
+
+  DevEnvName:
+    Type: String 
+    Description: Developer environment where code is being executed (OSX, Windows or Linux)
+    Default: 'OSX'
+
+Resources:
+  BackendApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: "'POST, GET, PUT, OPTIONS'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+        MaxAge: "'600'"
+
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: src/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Policies:
+        AmazonDynamoDBFullAccess
+      Environment:
+        Variables:
+          USER_TABLE: !Ref UserTable
+          LOCAL_USER_TABLE: !Ref LocalUserTableName
+          REGION: !Ref RegionName
+          AWS_ENV: !Ref AwsEnvName
+          DEV_ENV: !Ref DevEnvName
+      Events:
+        HelloWorld:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            RestApiId: !Ref BackendApi
+            Path: /hello
+            Method: get
+
+  UserTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      KeySchema:
+        - AttributeName: Id
+          KeyType: HASH
+      AttributeDefinitions:
+        - AttributeName: Id
+          AttributeType: S
+        - AttributeName: PublicAddress
+          AttributeType: S
+      GlobalSecondaryIndexes:
+        - ContributorInsightsSpecification: 
+            Enabled: True
+          IndexName: PublicAddress-index
+          Projection:
+            ProjectionType: "ALL"
+          KeySchema: 
+            - AttributeName: PublicAddress
+              KeyType: HASH
+          ProvisionedThroughput: 
+            ReadCapacityUnits: 2
+            WriteCapacityUnits: 2
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  HelloWorldApi:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !Sub "https://${BackendApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+  HelloWorldFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt HelloWorldFunction.Arn

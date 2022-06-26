@@ -1,0 +1,8 @@
+{
+  "HelloWorldFunction": {
+    "LOCAL_USER_TABLE": "UserTable",
+    "REGION": "ap-northeast-2",
+    "AWS_ENV": "AWS_SAM_LOCAL",
+    "DEV_ENV": "OSX"
+  }
+}

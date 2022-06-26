@@ -1,0 +1,30 @@
+{
+  "TableName": "UserTable",
+  "KeySchema": [{ "AttributeName": "Id", "KeyType": "HASH" }],
+  "AttributeDefinitions": [
+    { "AttributeName": "Id", "AttributeType": "S" },
+    { "AttributeName": "PublicAddress", "AttributeType": "S" }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "PublicAddress-index",
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "WriteCapacityUnits": 1,
+        "ReadCapacityUnits": 2
+      },
+      "KeySchema": [
+        {
+          "KeyType": "HASH",
+          "AttributeName": "PublicAddress"
+        }
+      ]
+    }
+  ],
+  "ProvisionedThroughput": {
+    "ReadCapacityUnits": 1,
+    "WriteCapacityUnits": 1
+  }
+}
